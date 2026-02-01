@@ -178,3 +178,17 @@ export async function setOpencodeZenApiKey(key: string, agentDir?: string) {
     agentDir: resolveAuthAgentDir(agentDir),
   });
 }
+
+export const UPSTAGE_DEFAULT_MODEL_REF = "upstage/solar-pro2";
+
+export async function setUpstageApiKey(key: string, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "upstage:default",
+    credential: {
+      type: "api_key",
+      provider: "upstage",
+      key,
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}

@@ -43,6 +43,17 @@ const XIAOMI_DEFAULT_COST = {
   cacheWrite: 0,
 };
 
+const UPSTAGE_BASE_URL = "https://api.upstage.ai/v1";
+export const UPSTAGE_DEFAULT_MODEL_ID = "solar-pro2";
+const UPSTAGE_DEFAULT_CONTEXT_WINDOW = 32768;
+const UPSTAGE_DEFAULT_MAX_TOKENS = 4096;
+const UPSTAGE_DEFAULT_COST = {
+  input: 0,
+  output: 0,
+  cacheRead: 0,
+  cacheWrite: 0,
+};
+
 const MOONSHOT_BASE_URL = "https://api.moonshot.ai/v1";
 const MOONSHOT_DEFAULT_MODEL_ID = "kimi-k2.5";
 const MOONSHOT_DEFAULT_CONTEXT_WINDOW = 256000;
@@ -376,6 +387,45 @@ export function buildXiaomiProvider(): ProviderConfig {
   };
 }
 
+export function buildUpstageProvider(): ProviderConfig {
+  return {
+    baseUrl: UPSTAGE_BASE_URL,
+    api: "openai-completions",
+    models: [
+      {
+        id: UPSTAGE_DEFAULT_MODEL_ID,
+        name: "Solar Pro 2",
+        reasoning: false,
+        input: ["text"],
+        cost: UPSTAGE_DEFAULT_COST,
+        contextWindow: UPSTAGE_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: UPSTAGE_DEFAULT_MAX_TOKENS,
+        compat: { supportsStore: false },
+      },
+      {
+        id: "solar-pro3",
+        name: "Solar Pro 3",
+        reasoning: false,
+        input: ["text"],
+        cost: UPSTAGE_DEFAULT_COST,
+        contextWindow: UPSTAGE_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: UPSTAGE_DEFAULT_MAX_TOKENS,
+        compat: { supportsStore: false },
+      },
+      {
+        id: "solar-mini",
+        name: "Solar Mini",
+        reasoning: false,
+        input: ["text"],
+        cost: UPSTAGE_DEFAULT_COST,
+        contextWindow: UPSTAGE_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: UPSTAGE_DEFAULT_MAX_TOKENS,
+        compat: { supportsStore: false },
+      },
+    ],
+  };
+}
+
 async function buildVeniceProvider(): Promise<ProviderConfig> {
   const models = await discoverVeniceModels();
   return {
@@ -451,6 +501,13 @@ export async function resolveImplicitProviders(params: {
     resolveApiKeyFromProfiles({ provider: "xiaomi", store: authStore });
   if (xiaomiKey) {
     providers.xiaomi = { ...buildXiaomiProvider(), apiKey: xiaomiKey };
+  }
+
+  const upstageKey =
+    resolveEnvApiKeyVarName("upstage") ??
+    resolveApiKeyFromProfiles({ provider: "upstage", store: authStore });
+  if (upstageKey) {
+    providers.upstage = { ...buildUpstageProvider(), apiKey: upstageKey };
   }
 
   // Ollama provider - only add if explicitly configured

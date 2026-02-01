@@ -17,6 +17,7 @@ import {
   applyOpencodeZenConfig,
   applyOpenrouterConfig,
   applySyntheticConfig,
+  applyUpstageConfig,
   applyVeniceConfig,
   applyVercelAiGatewayConfig,
   applyXiaomiConfig,
@@ -29,6 +30,7 @@ import {
   setOpencodeZenApiKey,
   setOpenrouterApiKey,
   setSyntheticApiKey,
+  setUpstageApiKey,
   setVeniceApiKey,
   setVercelAiGatewayApiKey,
   setXiaomiApiKey,
@@ -426,6 +428,29 @@ export async function applyNonInteractiveAuthChoice(params: {
       mode: "api_key",
     });
     return applyOpencodeZenConfig(nextConfig);
+  }
+
+  if (authChoice === "upstage-api-key") {
+    const resolved = await resolveNonInteractiveApiKey({
+      provider: "upstage",
+      cfg: baseConfig,
+      flagValue: opts.upstageApiKey,
+      flagName: "--upstage-api-key",
+      envVar: "UPSTAGE_API_KEY",
+      runtime,
+    });
+    if (!resolved) {
+      return null;
+    }
+    if (resolved.source !== "profile") {
+      await setUpstageApiKey(resolved.key);
+    }
+    nextConfig = applyAuthProfileConfig(nextConfig, {
+      profileId: "upstage:default",
+      provider: "upstage",
+      mode: "api_key",
+    });
+    return applyUpstageConfig(nextConfig);
   }
 
   if (

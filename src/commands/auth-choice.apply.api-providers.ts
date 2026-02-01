@@ -12,6 +12,12 @@ import {
   GOOGLE_GEMINI_DEFAULT_MODEL,
 } from "./google-gemini-model-default.js";
 import {
+  applyUpstageConfig,
+  applyUpstageProviderConfig,
+  setUpstageApiKey,
+  UPSTAGE_DEFAULT_MODEL_REF,
+} from "./onboard-auth.js";
+import {
   applyAuthProfileConfig,
   applyKimiCodeConfig,
   applyKimiCodeProviderConfig,
@@ -96,6 +102,8 @@ export async function applyAuthChoiceApiProviders(
       authChoice = "venice-api-key";
     } else if (params.opts.tokenProvider === "opencode") {
       authChoice = "opencode-zen";
+    } else if (params.opts.tokenProvider === "upstage") {
+      authChoice = "upstage-api-key";
     }
   }
 
@@ -634,6 +642,64 @@ export async function applyAuthChoiceApiProviders(
         applyDefaultConfig: applyOpencodeZenConfig,
         applyProviderConfig: applyOpencodeZenProviderConfig,
         noteDefault: OPENCODE_ZEN_DEFAULT_MODEL,
+        noteAgentModel,
+        prompter: params.prompter,
+      });
+      nextConfig = applied.config;
+      agentModelOverride = applied.agentModelOverride ?? agentModelOverride;
+    }
+    return { config: nextConfig, agentModelOverride };
+  }
+
+  if (authChoice === "upstage-api-key") {
+    let hasCredential = false;
+
+    if (!hasCredential && params.opts?.token && params.opts?.tokenProvider === "upstage") {
+      await setUpstageApiKey(normalizeApiKeyInput(params.opts.token), params.agentDir);
+      hasCredential = true;
+    }
+
+    if (!hasCredential) {
+      await params.prompter.note(
+        [
+          "Upstage provides Solar Pro 2, a powerful Korean language model.",
+          "Get your API key at: https://console.upstage.ai",
+        ].join("\n"),
+        "Upstage",
+      );
+    }
+
+    const envKey = resolveEnvApiKey("upstage");
+    if (envKey) {
+      const useExisting = await params.prompter.confirm({
+        message: `Use existing UPSTAGE_API_KEY (${envKey.source}, ${formatApiKeyPreview(envKey.apiKey)})?`,
+        initialValue: true,
+      });
+      if (useExisting) {
+        await setUpstageApiKey(envKey.apiKey, params.agentDir);
+        hasCredential = true;
+      }
+    }
+    if (!hasCredential) {
+      const key = await params.prompter.text({
+        message: "Enter Upstage API key",
+        validate: validateApiKeyInput,
+      });
+      await setUpstageApiKey(normalizeApiKeyInput(String(key)), params.agentDir);
+    }
+    nextConfig = applyAuthProfileConfig(nextConfig, {
+      profileId: "upstage:default",
+      provider: "upstage",
+      mode: "api_key",
+    });
+    {
+      const applied = await applyDefaultModelChoice({
+        config: nextConfig,
+        setDefaultModel: params.setDefaultModel,
+        defaultModel: UPSTAGE_DEFAULT_MODEL_REF,
+        applyDefaultConfig: applyUpstageConfig,
+        applyProviderConfig: applyUpstageProviderConfig,
+        noteDefault: UPSTAGE_DEFAULT_MODEL_REF,
         noteAgentModel,
         prompter: params.prompter,
       });

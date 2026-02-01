@@ -71,3 +71,7 @@ USER.md
 
 # local tooling
 .serena/
+
+# agent-trends skill artifacts
+skills/agent-trends/cache/
+skills/agent-trends/reports/
